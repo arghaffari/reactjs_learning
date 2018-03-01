@@ -9,18 +9,30 @@ const pushState = (obj, url) => {
   window.history.pushState(obj, '', url);
 };
 
+const onPopState = handler => {
+  window.onpopstate = handler;
+};
+
 
 class App extends React.Component {
-  state = { 
-    message: 'Hi!Hi',
-    contests: this.props.initialContests
-  };
+  static propTypes = {
+    initialData: PropTypes.object.isRequired
+  }
+  state = this.props.initialData;
 
   componentDidMount(){
-		
+    onPopState((event) => {
+      console.log(event.state);
+      this.setState({
+        currentContestId: (event.state || {}).currentContestId
+      });
+      console.log(event.state);
+      
+    });
   }
 
   componentWillUnmount(){
+    onPopState(null);
   }
 
   fetchContest = (contestId) => {
@@ -32,11 +44,9 @@ class App extends React.Component {
     );
 
     api.fetchContest(contestId).then(contest => {
-      console.log(contest.contest);
       this.setState({
-        message: contest.contest.description,
-        currentContestId: contest.contest.id,
-        contest: {
+        currentContestId: contest.id,
+        contests: {
           ...this.state.contests,
           [contest.id]: contest
         }
@@ -45,9 +55,38 @@ class App extends React.Component {
 	
   };
 
+  fetchContestList = () => {
+
+    pushState({
+      currentContestId: null
+    },
+    '/'
+    );
+
+    api.fetchContestList().then(contests => {
+      this.setState({
+        currentContestId: null,
+        contests
+      });
+    });
+	
+  };
+
+  getMessage(){
+    if(this.state.currentContestId){
+      return this.currentContest().contestName;
+    }
+
+    return 'Naming Contests';
+  }
+
   currentContest(){
+    return this.state.contests[this.state.currentContestId];
+  }
+
+  currentContent(){
     if (this.state.currentContestId) {
-      return <Contest {...this.state.contests[this.state.currentContestId]} />;
+      return <Contest {...this.currentContest()} contestListClick={this.fetchContestList}/>;
     }
 
     return <ContestList 
@@ -58,16 +97,12 @@ class App extends React.Component {
   render(){
     return (
       <div>
-        <Header message={this.state.message} />
-        {this.currentContest()}
+        <Header message={this.getMessage()} />
+        {this.currentContent()}
       </div>
     );
   }
 }
 
-App.propTypes = {
-  message: PropTypes.string,
-  initialContests: PropTypes.object.isRequired
-};
 
 export default App;

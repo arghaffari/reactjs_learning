@@ -1,4 +1,4 @@
-import config, { nodeEnv, logStars } from './config';
+import config from './config';
 import express from 'express';
 import fs from 'fs';
 import apiRouter from './api';
@@ -9,8 +9,8 @@ const server = express();
 
 
 server.use(sassMiddleware({
-	src: path.join(__dirname, 'sass'),
-	dest: path.join(__dirname, 'public')
+  src: path.join(__dirname, 'sass'),
+  dest: path.join(__dirname, 'public')
 }));
 
 
@@ -20,28 +20,27 @@ server.set('view engine', 'ejs');
 
 import serverRender from './serverRender';
 
-server.get('/', (req, res) => {
-	console.log("content");
-	serverRender()
-		.then(content => {
-			console.log(content);
-			res.render('index', {
-				content
-			});
-		})
-		.catch(console.log);
+server.get(['/', '/contest/:contestId'], (req, res) => {
+  serverRender(req.params.contestId)
+    .then(({ initialMarkup, initialData }) => {
+      res.render('index', {
+	  initialMarkup,
+	  initialData
+      });
+    })
+    .catch(console.log);
 });
 server.use(express.static('public'));
 server.use('/api', apiRouter);
 
 
 server.get('/about.html', (req, res) => {
-	fs.readFile('./about.html', (err, data) => {
-		req.send(data.toString());
-	});
+  fs.readFile('./about.html', (err, data) => {
+    req.send(data.toString());
+  });
 });
 
 
 server.listen(config.port, config.host, ()=>{
-	console.info('Express listening on port: ' + config.port + " " + config.host);
+  console.info('Express listening on port: ' + config.port + ' ' + config.host);
 });

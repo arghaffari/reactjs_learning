@@ -9,5 +9,9 @@
   .ContestPreview .contest-name {
     padding: 0.5em; }
 
+.home-link {
+  margin-top: 1em;
+  color: #0000ee; }
+
 .link {
   cursor: pointer; }
